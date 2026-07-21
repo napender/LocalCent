@@ -25,10 +25,7 @@ export default function Dashboard() {
             
             {/* Top Header (Mobile Only) */}
             <header className="md:hidden flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-900 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-md z-10">
-                <h1 className="text-xl font-bold">
-                    <span className="text-slate-800 dark:text-slate-200 font-normal">Local</span>
-                    <span className="text-indigo-600 dark:text-indigo-400 relative">Cent<span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></span></span>
-                </h1>
+                <img src="/logo-wide.png" alt="LocalCent" className="h-8 object-contain" />
                 <div className="flex items-center gap-3">
                     <span className="text-slate-500 dark:text-slate-400 text-sm truncate max-w-[100px]">{currentUser?.name}</span>
                     <button onClick={logout} className="p-2 rounded-full bg-slate-200 dark:bg-slate-900 hover:bg-slate-300 dark:hover:bg-slate-800 transition">
@@ -48,10 +45,7 @@ export default function Dashboard() {
             {/* Sidebar (Desktop Only) */}
             <aside className="hidden md:flex flex-col w-64 border-r border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950 p-6">
                 <div className="mb-10 flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">
-                        <span className="text-slate-800 dark:text-slate-200 font-normal">Local</span>
-                        <span className="text-indigo-600 dark:text-indigo-400 relative">Cent<span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></span></span>
-                    </h1>
+                    <img src="/logo-wide.png" alt="LocalCent" className="h-10 object-contain" />
                 </div>
                 
                 <nav className="flex-1 space-y-2">

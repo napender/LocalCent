@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/logo.png" alt="LocalCent Logo" width="200"/>
+  <img src="assets/logo-wide.png" alt="LocalCent Logo" width="400"/>
   <h1>LocalCent</h1>
   <p><strong>A Hyper-Local, Privacy-First Personal Finance Tracker</strong></p>
 </div>
