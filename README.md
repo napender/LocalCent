@@ -199,7 +199,24 @@ localcent/
 
 ## 📸 Screenshots
 
-> *Screenshots coming soon — help us out by submitting yours!*
+<div align="center">
+
+### Setup & Login
+
+<img src="screenshots/screenshot-setup.png" alt="Setup Wizard" width="400"/>
+<img src="screenshots/screenshot-login.png" alt="Login" width="400"/>
+
+### Dashboard & AI Chat
+
+<img src="screenshots/screenshot-dashboard.png" alt="Dashboard" width="400"/>
+<img src="screenshots/screenshot-ai-chat.png" alt="AI Financial Chat" width="400"/>
+
+### Settings
+
+<img src="screenshots/screenshot-settings.png" alt="Settings" width="400"/>
+<img src="screenshots/screenshot-sms-sync.png" alt="SMS Sync Configuration" width="400"/>
+
+</div>
 
 ---
 
