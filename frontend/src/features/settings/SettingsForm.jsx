@@ -3,11 +3,8 @@ import { apiClient } from '../../services/api';
 
 export default function SettingsForm() {
     const [settings, setSettings] = useState({
-        active_ai_provider: 'openai',
-        api_key: '',
         monthly_budget_target: 10000.00
     });
-    const [maskedKey, setMaskedKey] = useState('');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
@@ -21,11 +18,8 @@ export default function SettingsForm() {
         const { ok, data } = await apiClient('/api/settings/');
         if (ok) {
             setSettings({
-                active_ai_provider: data.active_ai_provider || 'openai',
-                api_key: '', // Don't put the masked key in the input value
                 monthly_budget_target: data.monthly_budget_target || 10000.00
             });
-            setMaskedKey(data.api_key_masked);
         }
         setLoading(false);
     };
@@ -59,7 +53,7 @@ export default function SettingsForm() {
 
     return (
         <div className="max-w-2xl mx-auto p-8 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-2xl shadow-sm">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">System Settings</h2>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">General Settings</h2>
             
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
@@ -73,38 +67,6 @@ export default function SettingsForm() {
                         min="0"
                         step="100"
                     />
-                </div>
-
-                <div className="pt-6 border-t border-slate-100 dark:border-zinc-800">
-                    <h3 className="text-lg font-semibold text-indigo-600 dark:text-indigo-400 mb-4">AI Advisor Configuration</h3>
-                    
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-500 dark:text-zinc-400 mb-2">AI Provider</label>
-                            <select
-                                name="active_ai_provider"
-                                value={settings.active_ai_provider}
-                                onChange={handleChange}
-                                className="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition appearance-none"
-                            >
-                                <option value="openai">OpenAI (GPT-3.5 Turbo)</option>
-                                <option value="anthropic">Anthropic (Claude 3 Haiku)</option>
-                                <option value="deepseek">DeepSeek (DeepSeek Chat)</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-slate-500 dark:text-zinc-400 mb-2">API Key</label>
-                            <input
-                                type="password"
-                                name="api_key"
-                                value={settings.api_key}
-                                onChange={handleChange}
-                                placeholder={maskedKey ? `Current: ${maskedKey} (Leave blank to keep)` : "Enter API Key"}
-                                className="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition"
-                            />
-                        </div>
-                    </div>
                 </div>
 
                 <div className="pt-6 border-t border-slate-100 dark:border-zinc-800">

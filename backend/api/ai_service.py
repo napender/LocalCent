@@ -44,7 +44,7 @@ def get_aggregated_data(timeframe):
         "top_5_merchants": top_merchants
     }
 
-def generate_financial_advice(aggregated_data, provider, api_key):
+def generate_financial_advice(aggregated_data, provider, api_key, settings=None):
     """
     Uses litellm to get financial advice based on compressed JSON.
     """
@@ -55,15 +55,28 @@ Avoid generic advice; focus strictly on the provided numbers. Keep it brief and 
 
     user_content = f"Here is my financial data:\n{json.dumps(aggregated_data, indent=2)}"
 
-    # litellm automatically routes based on the model string
-    # We will map standard provider names to their best lightweight/fast models
-    model_map = {
-        "openai": "gpt-3.5-turbo",
-        "anthropic": "claude-3-haiku-20240307",
-        "deepseek": "deepseek-chat"
-    }
+    # Determine the model string based on settings
+    model = "gpt-3.5-turbo"
+    provider = provider.lower()
     
-    model = model_map.get(provider.lower(), "gpt-3.5-turbo")
+    if settings and settings.ai_model_mode == 'advanced' and settings.ai_custom_model:
+        model = settings.ai_custom_model
+    else:
+        tier = getattr(settings, 'ai_model_tier', 'fast') if settings else 'fast'
+        if tier == 'smart':
+            if provider == 'openai': model = 'gpt-4o'
+            elif provider == 'anthropic': model = 'claude-3-5-sonnet-20240620'
+            elif provider == 'gemini': model = 'gemini-1.5-pro'
+            elif provider == 'deepseek': model = 'deepseek/deepseek-reasoner'
+            elif provider == 'groq': model = 'groq/llama-3.1-70b-versatile'
+            else: model = 'gpt-4o'
+        else:
+            if provider == 'openai': model = 'gpt-4o-mini'
+            elif provider == 'anthropic': model = 'claude-3-haiku-20240307'
+            elif provider == 'gemini': model = 'gemini-1.5-flash'
+            elif provider == 'deepseek': model = 'deepseek/deepseek-chat'
+            elif provider == 'groq': model = 'groq/llama-3.1-8b-instant'
+            else: model = 'gpt-3.5-turbo'
     
     try:
         response = completion(

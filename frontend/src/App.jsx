@@ -1,15 +1,51 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FamilyAuthProvider, useFamilyAuth } from './context/FamilyAuthContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import SetupWizard from './pages/SetupWizard';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPasswordConfirm from './pages/ResetPasswordConfirm';
 
 function AppContent() {
-    const { isAuthenticated, isLoading } = useFamilyAuth();
+    const { isAuthenticated, isSetupComplete, isLoading } = useFamilyAuth();
+    const [currentView, setCurrentView] = useState('login');
+    const [resetParams, setResetParams] = useState(null);
+
+    useEffect(() => {
+        // Simple routing for the reset link
+        if (window.location.pathname === '/reset-password') {
+            const params = new URLSearchParams(window.location.search);
+            const uid = params.get('uid');
+            const token = params.get('token');
+            if (uid && token) {
+                setResetParams({ uid, token });
+                setCurrentView('reset-password-confirm');
+            }
+        }
+    }, []);
+
+    const handleBackToLogin = () => {
+        setCurrentView('login');
+        if (window.location.pathname === '/reset-password') {
+            window.history.replaceState({}, '', '/');
+        }
+    };
 
     if (isLoading) return <div className="h-screen w-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 text-indigo-600 dark:text-indigo-400">Loading...</div>;
 
+    if (currentView === 'reset-password-confirm' && resetParams) {
+        return <ResetPasswordConfirm uid={resetParams.uid} token={resetParams.token} onBack={handleBackToLogin} />;
+    }
+
+    if (!isSetupComplete) {
+        return <SetupWizard />;
+    }
+
     if (!isAuthenticated) {
-        return <Login />;
+        if (currentView === 'forgot-password') {
+            return <ForgotPassword onBack={handleBackToLogin} />;
+        }
+        return <Login onForgotPassword={() => setCurrentView('forgot-password')} />;
     }
 
     return <Dashboard />;

@@ -51,5 +51,14 @@ In `frontend/src/features/transactions/RecentTransactions.jsx`:
 
 ---
 
+### Task 5: Background IMAP Email Sync Engine (Huey)
+In `backend/api/email_worker.py` and `backend/api/tasks.py`:
+1.  **IMAP Sync Logic (`email_worker.py`):** Write a script that connects to an IMAP server (with auto-discovery for Gmail/Outlook/Yahoo) using credentials from `SystemSettings` (email & AES-encrypted app password).
+2.  **PDF Parsing:** The worker should search for unread emails, extract PDF attachments (bank/credit card statements), and use `pdfplumber` to extract transaction rows.
+3.  **Deduplication & Storage:** Extracted transactions must be run through the same deduplication hash logic and saved to the `Transaction` table.
+4.  **Huey Task Scheduler (`tasks.py`):** Wrap the email worker logic in a `@db_periodic_task(crontab(minute='*/30'))` so it runs in the background every 30 minutes. Provide a manual `/api/settings/sync-email/` endpoint to trigger it immediately from the frontend.
+
+---
+
 ### Output Requirements
 Please provide the Python code for the deduplication/parsing logic, the Django views and URLs for the webhooks, and the React code for the `RecentTransactions.jsx` component.

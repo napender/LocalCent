@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useFamilyAuth } from '../context/FamilyAuthContext';
+import useDarkMode from '../hooks/useDarkMode';
+import OnboardingChecklist from '../features/dashboard/OnboardingChecklist';
 import RecentTransactions from '../features/transactions/RecentTransactions';
 import SummaryMetrics from '../features/dashboard/SummaryMetrics';
 import SettingsForm from '../features/settings/SettingsForm';
@@ -7,12 +9,15 @@ import CardManagement from '../features/settings/CardManagement';
 import AIAnalysisModal from '../features/ai-analysis/AIAnalysisModal';
 import UpcomingBills from '../features/dashboard/UpcomingBills';
 import CreditCardsWidget from '../features/dashboard/CreditCardsWidget';
+import AiSettings from '../features/settings/AiSettings';
+import EmailSyncSettings from '../features/settings/EmailSyncSettings';
 import { apiClient } from '../services/api';
 
 export default function Dashboard() {
     const { currentUser, logout } = useFamilyAuth();
     const [activeTab, setActiveTab] = useState('dashboard');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [theme, toggleTheme] = useDarkMode();
 
     const navItems = [
         { id: 'dashboard', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -25,7 +30,7 @@ export default function Dashboard() {
             
             {/* Top Header (Mobile Only) */}
             <header className="md:hidden flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-900 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-md z-10">
-                <img src="/logo-wide.png" alt="LocalCent" className="h-8 object-contain" />
+                <img src="/logo-wide.png" alt="LocalCent" className="w-28 h-auto object-contain object-left" />
                 <div className="flex items-center gap-3">
                     <span className="text-slate-500 dark:text-slate-400 text-sm truncate max-w-[100px]">{currentUser?.name}</span>
                     <button onClick={logout} className="p-2 rounded-full bg-slate-200 dark:bg-slate-900 hover:bg-slate-300 dark:hover:bg-slate-800 transition">
@@ -43,9 +48,9 @@ export default function Dashboard() {
             </div>
 
             {/* Sidebar (Desktop Only) */}
-            <aside className="hidden md:flex flex-col w-64 border-r border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950 p-6">
-                <div className="mb-10 flex items-center justify-between">
-                    <img src="/logo-wide.png" alt="LocalCent" className="h-10 object-contain" />
+            <aside className="hidden md:flex flex-col w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                <div className="mb-8 flex items-center justify-center">
+                    <img src="/logo-wide.png" alt="LocalCent" className="w-48 max-w-full h-auto object-contain drop-shadow-md transition-transform hover:scale-105" />
                 </div>
                 
                 <nav className="flex-1 space-y-2">
@@ -53,7 +58,7 @@ export default function Dashboard() {
                         <button
                             key={item.id}
                             onClick={() => setActiveTab(item.id)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${activeTab === item.id ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-slate-200'}`}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${activeTab === item.id ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 font-semibold shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200'}`}
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
@@ -63,21 +68,41 @@ export default function Dashboard() {
                     ))}
                 </nav>
 
-                <div className="mt-auto pt-6 border-t border-slate-200 dark:border-slate-900 flex items-center justify-between">
-                    <div className="flex flex-col">
-                        <span className="text-sm font-medium">{currentUser?.name}</span>
-                        <span className="text-xs text-slate-500 dark:text-slate-500 capitalize">{currentUser?.role}</span>
-                    </div>
-                    <button onClick={logout} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-900 transition text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white" title="Lock">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                <div className="mt-auto pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-4">
+                    <button 
+                        onClick={toggleTheme} 
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200 w-full"
+                    >
+                        {theme === 'dark' ? (
+                            <>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                                <span>Light Mode</span>
+                            </>
+                        ) : (
+                            <>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                                <span>Dark Mode</span>
+                            </>
+                        )}
                     </button>
+                    
+                    <div className="flex items-center justify-between px-2">
+                        <div className="flex flex-col">
+                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{currentUser?.name}</span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400 capitalize">{currentUser?.role}</span>
+                        </div>
+                        <button onClick={logout} className="p-2 rounded-full hover:bg-rose-50 dark:hover:bg-rose-500/10 transition text-slate-400 hover:text-rose-600 dark:hover:text-rose-400" title="Logout">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                        </button>
+                    </div>
                 </div>
             </aside>
 
             {/* Main Content */}
             <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8">
                 {activeTab === 'dashboard' && (
-                    <div className="max-w-7xl mx-auto h-full flex flex-col">
+                    <div className="max-w-7xl mx-auto min-h-full flex flex-col">
+                        <OnboardingChecklist />
                         <SummaryMetrics />
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 flex-1 min-h-0">
                             {/* Transactions takes 8 cols on large screens */}
@@ -125,6 +150,8 @@ export default function Dashboard() {
                 {activeTab === 'settings' && (
                     <div className="max-w-7xl mx-auto min-h-[800px] pb-12">
                         <SettingsForm />
+                        <AiSettings />
+                        <EmailSyncSettings />
                         <CardManagement />
                     </div>
                 )}

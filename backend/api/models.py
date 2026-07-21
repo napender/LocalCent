@@ -1,29 +1,56 @@
 from django.db import models
-
+from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.hashers import make_password, check_password
+from django.conf import settings
+from django.contrib.auth.models import BaseUserManager
 
-class FamilyMember(models.Model):
-    name = models.CharField(max_length=50)
-    pin_code = models.CharField(max_length=128, unique=True)
-    is_admin = models.BooleanField(default=False)
+class CustomUserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError('The Email field must be set')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
 
-    def save(self, *args, **kwargs):
-        # Hash the PIN before saving if it's not already hashed (Django hashes start with 'pbkdf2_sha256$', etc.)
-        # A plain 4-digit PIN will not contain '$'
-        if self.pin_code and not self.pin_code.startswith('pbkdf2_') and not self.pin_code.startswith('argon2'):
-            self.pin_code = make_password(self.pin_code)
-        super().save(*args, **kwargs)
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        return self.create_user(email, password, **extra_fields)
 
-    def check_pin(self, raw_pin):
-        return check_password(raw_pin, self.pin_code)
+class CustomUser(AbstractUser):
+    email = models.EmailField(unique=True)
+    username = None # Remove username, use email instead
+    
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
+
+    objects = CustomUserManager()
 
     def __str__(self):
-        return f"{self.name} ({'Admin' if self.is_admin else 'User'})"
+        return f"{self.first_name} {self.last_name} ({self.email})"
+
+class SecurityAnswer(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='security_answers')
+    question_text = models.CharField(max_length=255)
+    hashed_answer = models.CharField(max_length=128)
+
+    def save(self, *args, **kwargs):
+        if self.hashed_answer and not self.hashed_answer.startswith('pbkdf2_') and not self.hashed_answer.startswith('argon2'):
+            self.hashed_answer = make_password(self.hashed_answer.lower().strip())
+        super().save(*args, **kwargs)
+
+    def check_answer(self, raw_answer):
+        return check_password(raw_answer.lower().strip(), self.hashed_answer)
+
+    def __str__(self):
+        return f"Q: {self.question_text} for {self.user.email}"
 
 from .encryption import encrypt_string, decrypt_string
 
 class Account(models.Model):
-    owner = models.ForeignKey(FamilyMember, on_delete=models.CASCADE, related_name='accounts')
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='accounts')
     bank_name = models.CharField(max_length=100)
     account_type = models.CharField(max_length=50) # e.g., Credit, Debit
     last_four_digits = models.CharField(max_length=4, null=True, blank=True)
@@ -59,16 +86,47 @@ class Transaction(models.Model):
 
 class SystemSettings(models.Model):
     active_ai_provider = models.CharField(max_length=50, default="openai")
-    api_key = models.CharField(max_length=255, null=True, blank=True)
+    openai_api_key = models.CharField(max_length=255, null=True, blank=True)
+    anthropic_api_key = models.CharField(max_length=255, null=True, blank=True)
+    gemini_api_key = models.CharField(max_length=255, null=True, blank=True)
+    deepseek_api_key = models.CharField(max_length=255, null=True, blank=True)
+    groq_api_key = models.CharField(max_length=255, null=True, blank=True)
+    ai_model_mode = models.CharField(max_length=20, default="simple")
+    ai_model_tier = models.CharField(max_length=20, default="fast")
+    ai_custom_model = models.CharField(max_length=100, null=True, blank=True)
     monthly_budget_target = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    imap_email = models.EmailField(null=True, blank=True)
+    imap_password = models.CharField(max_length=255, null=True, blank=True)
 
     def save(self, *args, **kwargs):
-        if self.api_key and self.api_key != '••••••••••••' and not self.api_key.startswith('gAAAAA'):
-             self.api_key = encrypt_string(self.api_key)
+        for key_field in ['openai_api_key', 'anthropic_api_key', 'gemini_api_key', 'deepseek_api_key', 'groq_api_key']:
+            val = getattr(self, key_field)
+            if val and val != '••••••••••••' and not val.startswith('gAAAAA'):
+                setattr(self, key_field, encrypt_string(val))
+        if self.imap_password and self.imap_password != '••••••••••••' and not self.imap_password.startswith('gAAAAA'):
+             self.imap_password = encrypt_string(self.imap_password)
         super().save(*args, **kwargs)
 
     def get_decrypted_api_key(self):
-        return decrypt_string(self.api_key)
+        provider = self.active_ai_provider.lower()
+        key_to_use = None
+        if provider == 'openai':
+            key_to_use = self.openai_api_key
+        elif provider == 'anthropic':
+            key_to_use = self.anthropic_api_key
+        elif provider == 'gemini':
+            key_to_use = self.gemini_api_key
+        elif provider == 'deepseek':
+            key_to_use = self.deepseek_api_key
+        elif provider == 'groq':
+            key_to_use = self.groq_api_key
+            
+        if not key_to_use: return None
+        return decrypt_string(key_to_use)
+
+    def get_decrypted_imap_password(self):
+        if not self.imap_password: return None
+        return decrypt_string(self.imap_password)
 
     def __str__(self):
         return "System Settings"

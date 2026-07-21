@@ -4,27 +4,41 @@ import email
 from email.header import decode_header
 from datetime import datetime
 from django.db import IntegrityError
-from .models import Account, Transaction, FamilyMember
+from .models import Account, Transaction, SystemSettings
 from .services import generate_transaction_hash, assign_category
 from .pdf_parser import process_statement_pdf
 
-# Use app passwords and environment variables in production
-IMAP_SERVER = "imap.gmail.com"
-IMAP_EMAIL = os.environ.get("IMAP_EMAIL", "")
-IMAP_PASSWORD = os.environ.get("IMAP_PASSWORD", "")
+def get_imap_server(email_address):
+    domain = email_address.split('@')[-1].lower()
+    if domain in ['gmail.com', 'googlemail.com']:
+        return 'imap.gmail.com'
+    elif domain in ['yahoo.com', 'ymail.com', 'rocketmail.com']:
+        return 'imap.mail.yahoo.com'
+    elif domain in ['outlook.com', 'hotmail.com', 'live.com', 'msn.com']:
+        return 'imap-mail.outlook.com'
+    elif domain in ['icloud.com', 'me.com', 'mac.com']:
+        return 'imap.mail.me.com'
+    else:
+        # Fallback heuristic
+        return f'imap.{domain}'
 
 def fetch_and_process_emails():
     """
     Connects to IMAP, finds unread bank statements, downloads PDFs into memory,
     decrypts them, and saves the transactions.
     """
-    if not IMAP_EMAIL or not IMAP_PASSWORD:
+    settings = SystemSettings.objects.first()
+    if not settings or not settings.imap_email or not settings.imap_password:
         print("IMAP credentials not configured. Skipping email fetch.")
         return 0
         
+    imap_email = settings.imap_email
+    imap_password = settings.get_decrypted_imap_password()
+    imap_server = get_imap_server(imap_email)
+
     try:
-        mail = imaplib.IMAP4_SSL(IMAP_SERVER)
-        mail.login(IMAP_EMAIL, IMAP_PASSWORD)
+        mail = imaplib.IMAP4_SSL(imap_server)
+        mail.login(imap_email, imap_password)
         mail.select("inbox")
         
         # Search for unread emails with attachments (basic filter, can be refined by sender)
@@ -93,8 +107,8 @@ def fetch_and_process_emails():
                                         
                                         break # Stop trying passwords once successful
                                         
-            # Mark as read (optional, depends on preference)
-            # mail.store(e_id, '+FLAGS', '\SEEN')
+            # Mark as read so we don't process it again
+            mail.store(e_id, '+FLAGS', r'\SEEN')
             
         mail.close()
         mail.logout()

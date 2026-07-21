@@ -15,7 +15,8 @@ LocalCent is designed for users who want to take control of their finances witho
 - 💸 **Transaction Tracking**: Log daily expenses and incomes with ease. Support for smart deduplication based on transaction hash.
 - 🔁 **Recurring Bills Detection**: Automatic detection of fixed, recurring expenses so you're never caught off guard.
 - 💳 **Credit Card Statements**: Track unbilled amounts and upcoming due dates across multiple credit cards.
-- 🤖 **AI Financial Advisor**: Integrated with OpenAI, Anthropic, and DeepSeek. Ask your local advisor to analyze your spending trends and give personalized budgeting tips.
+- 📧 **Background Email Sync**: Automated IMAP integration via Huey to fetch, parse, and categorize monthly bank and credit card PDF statements completely hands-free.
+- 🤖 **AI Financial Advisor**: Integrated with OpenAI, Anthropic, Google Gemini, DeepSeek, and Groq. Includes granular Simple/Advanced model selection for cost/quality optimization.
 - 🔒 **End-to-End Encryption**: SMS and email payloads processed by the backend are encrypted at rest using AES-256.
 - 🌙 **Light & Dark Themes**: A beautifully crafted UI using standard Tailwind `dark:` variants. Fully responsive and visually stunning.
 - 📱 **Progressive Web App (PWA)**: Install LocalCent on your desktop or mobile device. Works completely offline with seamless network status detection.
