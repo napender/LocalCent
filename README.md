@@ -199,7 +199,14 @@ localcent/
 
 ## 📸 Screenshots
 
-> *Screenshots coming soon — help us out by submitting yours!*
+<div align="center">
+  <img src="screenshots/screenshot-setup.png" alt="Screenshot 1" width="400"/>
+  <img src="screenshots/screenshot-login.png" alt="Screenshot 2" width="400"/>
+  <img src="screenshots/screenshot-dashboard.png" alt="Screenshot 3" width="400"/>
+  <img src="screenshots/screenshot-ai-chat.png" alt="Screenshot 4" width="400"/>
+  <img src="screenshots/screenshot-settings.png" alt="Screenshot 5" width="400"/>
+  <img src="screenshots/screenshot-sms-sync.png" alt="Screenshot 6" width="400"/>
+</div>
 
 ---
 
