@@ -61,8 +61,12 @@ npm run pm2:start
 ```
 *(This starts both the Django backend and the Vite preview server in the background).*
 
-## 🔐 Configuration
-To utilize the AI capabilities or automated backups, ensure you fill out your API Keys in the in-app **Settings** page. All configuration is stored safely in your local SQLite database.
+## 🔐 Security & Architecture Notes
+- **Database**: LocalCent uses **SQLite** by design to keep everything in a single, local file without the overhead of running a full Postgres/MySQL service. For a personal app, this is ideal. Ensure your file permissions on `db.sqlite3` are restrictive (e.g., `chmod 600`).
+- **Network Access**: By default, the Vite dev server binds to `0.0.0.0` (as defined in `ecosystem.config.js`). This is intentional so you can access LocalCent from your phone or tablet on the same local Wi-Fi network. Ensure your local network is trusted.
+
+## ⚙️ Configuration
+To utilize the AI capabilities or automated backups, ensure you fill out your API Keys in the in-app **Settings** page. All configuration is stored safely in your local SQLite database and encrypted at rest using your `.env` encryption key.
 
 ## 🤝 Contributing
 Since this is a hyper-local privacy tool, feel free to fork, customize, and extend LocalCent to fit your specific financial workflow!

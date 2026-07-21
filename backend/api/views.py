@@ -1,24 +1,60 @@
 import json
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+import logging
+import time
+from django.views.decorators.csrf import ensure_csrf_cookie
 from .models import FamilyMember
 
-@csrf_exempt
+logger = logging.getLogger(__name__)
+
+# Simple in-memory rate limiting for PIN brute-force protection
+# Format: {ip_address: {"attempts": int, "lockout_until": float}}
+LOGIN_ATTEMPTS = {}
+
+@ensure_csrf_cookie
 def login_view(request):
     if request.method == 'POST':
+        client_ip = request.META.get('REMOTE_ADDR', '127.0.0.1')
+        now = time.time()
+        
+        # Check rate limit
+        record = LOGIN_ATTEMPTS.get(client_ip, {"attempts": 0, "lockout_until": 0})
+        if now < record["lockout_until"]:
+            return JsonResponse({"error": "Too many attempts. Try again later."}, status=429)
+
         try:
             data = json.loads(request.body)
             pin = data.get('pin')
-            member = FamilyMember.objects.get(pin_code=pin)
-            return JsonResponse({
-                "id": member.id,
-                "name": member.name,
-                "role": "admin" if member.is_admin else "user"
-            }, status=200)
-        except FamilyMember.DoesNotExist:
-            return JsonResponse({"error": "Unauthorized"}, status=401)
+            
+            # Find member by checking hashes
+            authenticated_member = None
+            for member in FamilyMember.objects.all():
+                if member.check_pin(pin):
+                    authenticated_member = member
+                    break
+            
+            if authenticated_member:
+                # Reset attempts on success
+                LOGIN_ATTEMPTS.pop(client_ip, None)
+                return JsonResponse({
+                    "id": authenticated_member.id,
+                    "name": authenticated_member.name,
+                    "role": "admin" if authenticated_member.is_admin else "user"
+                }, status=200)
+            else:
+                # Increment attempts
+                record["attempts"] += 1
+                if record["attempts"] >= 5:
+                    record["lockout_until"] = now + 300 # 5 minutes lockout
+                LOGIN_ATTEMPTS[client_ip] = record
+                
+                return JsonResponse({"error": "Unauthorized"}, status=401)
+                
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid payload"}, status=400)
+        except Exception as e:
+            logger.error(f"Login error: {e}", exc_info=True)
+            return JsonResponse({"error": "Internal server error"}, status=500)
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
 from django.db import IntegrityError
@@ -26,7 +62,6 @@ from datetime import datetime
 from .models import Account, Transaction
 from .services import parse_sms_text, generate_transaction_hash, assign_category
 
-@csrf_exempt
 def webhook_sms(request):
     if request.method == 'POST':
         try:
@@ -83,10 +118,10 @@ def webhook_sms(request):
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid payload"}, status=400)
         except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
+            logger.error(f"Webhook error: {e}", exc_info=True)
+            return JsonResponse({"error": "Internal server error"}, status=500)
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
-@csrf_exempt
 def update_transaction(request, tx_id):
     if request.method == 'PATCH':
         try:
@@ -110,7 +145,8 @@ def update_transaction(request, tx_id):
         except Transaction.DoesNotExist:
             return JsonResponse({"error": "Transaction not found"}, status=404)
         except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
+            logger.error(f"Update transaction error: {e}", exc_info=True)
+            return JsonResponse({"error": "Internal server error"}, status=400)
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
 def list_transactions(request):
@@ -165,7 +201,7 @@ def dashboard_summary(request):
         }, status=200)
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
-@csrf_exempt
+@ensure_csrf_cookie
 def system_settings(request):
     settings, created = SystemSettings.objects.get_or_create(id=1)
     
@@ -193,13 +229,13 @@ def system_settings(request):
             settings.save()
             return JsonResponse({"status": "success"}, status=200)
         except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
+            logger.error(f"Save settings error: {e}", exc_info=True)
+            return JsonResponse({"error": "Internal server error"}, status=400)
             
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
 from .ai_service import get_aggregated_data, generate_financial_advice
 
-@csrf_exempt
 def ai_analyze(request):
     if request.method == 'POST':
         try:
@@ -221,14 +257,14 @@ def ai_analyze(request):
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid payload"}, status=400)
         except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
+            logger.error(f"AI Analysis error: {e}", exc_info=True)
+            return JsonResponse({"error": "Internal server error"}, status=500)
             
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
 from .models import RecurringBill
 from .services import scan_for_recurring_bills
 
-@csrf_exempt
 def list_or_create_bills(request):
     if request.method == 'GET':
         bills = RecurringBill.objects.all().order_by('next_due_date')
@@ -273,21 +309,21 @@ def list_or_create_bills(request):
             )
             return JsonResponse({"status": "success", "id": bill.id}, status=201)
         except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
+            logger.error(f"Create bill error: {e}", exc_info=True)
+            return JsonResponse({"error": "Internal server error"}, status=400)
             
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
-@csrf_exempt
 def scan_bills(request):
     if request.method == 'POST':
         try:
             detected_count = scan_for_recurring_bills()
             return JsonResponse({"status": "success", "detected_count": detected_count}, status=200)
         except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
+            logger.error(f"Scan bills error: {e}", exc_info=True)
+            return JsonResponse({"error": "Internal server error"}, status=500)
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
-@csrf_exempt
 def manage_accounts(request):
     if request.method == 'GET':
         accounts = Account.objects.all()
@@ -322,14 +358,14 @@ def manage_accounts(request):
             )
             return JsonResponse({"status": "success", "id": acc.id}, status=201)
         except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
+            logger.error(f"Manage account error: {e}", exc_info=True)
+            return JsonResponse({"error": "Internal server error"}, status=400)
             
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
 import csv
 from django.http import HttpResponse
 
-@csrf_exempt
 def export_transactions_csv(request):
     if request.method == 'GET':
         response = HttpResponse(content_type='text/csv')

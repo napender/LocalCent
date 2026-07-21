@@ -1,9 +1,21 @@
 from django.db import models
 
+from django.contrib.auth.hashers import make_password, check_password
+
 class FamilyMember(models.Model):
     name = models.CharField(max_length=50)
-    pin_code = models.CharField(max_length=4, unique=True)
+    pin_code = models.CharField(max_length=128, unique=True)
     is_admin = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        # Hash the PIN before saving if it's not already hashed (Django hashes start with 'pbkdf2_sha256$', etc.)
+        # A plain 4-digit PIN will not contain '$'
+        if self.pin_code and not self.pin_code.startswith('pbkdf2_') and not self.pin_code.startswith('argon2'):
+            self.pin_code = make_password(self.pin_code)
+        super().save(*args, **kwargs)
+
+    def check_pin(self, raw_pin):
+        return check_password(raw_pin, self.pin_code)
 
     def __str__(self):
         return f"{self.name} ({'Admin' if self.is_admin else 'User'})"

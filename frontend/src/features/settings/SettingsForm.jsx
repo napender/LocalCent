@@ -113,8 +113,7 @@ export default function SettingsForm() {
                         <button
                             type="button"
                             onClick={() => {
-                                const pin = localStorage.getItem('family_pin');
-                                window.location.href = `http://localhost:8000/api/export/transactions/?pin=${pin || ''}`;
+                                window.location.href = `/api/export/transactions/`;
                             }}
                             className="w-full flex items-center justify-center gap-2 bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition"
                         >
