@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 const CopyButton = ({ text }) => {
     const [copied, setCopied] = useState(false);
@@ -33,168 +33,43 @@ const CopyButton = ({ text }) => {
     );
 };
 
-const Modal = ({ isOpen, onClose, title, children }) => {
-    if (!isOpen) return null;
+export default function SmsSyncSettings() {
+    const [activeTab, setActiveTab] = useState('android');
+    const webhookUrl = `${window.location.protocol}//${window.location.hostname}:8000/api/webhooks/sms/`;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-900/50 backdrop-blur-sm animate-fadeIn">
-            <div className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-xl overflow-hidden animate-slideUp">
-                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">{title}</h3>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition">
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-                <div className="p-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
-                    {children}
-                </div>
-            </div>
-        </div>
-    );
-};
-import AiSettings from '../settings/AiSettings';
-import EmailSyncSettings from '../settings/EmailSyncSettings';
-import { apiClient } from '../../services/api';
+        <div className="max-w-2xl mx-auto p-8 mt-6 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-2xl shadow-sm">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">SMS Sync Configuration</h2>
+            <p className="text-sm text-slate-500 dark:text-zinc-400 mb-6">
+                Automatically forward bank SMS receipts from your phone to LocalCent for hands-free transaction tracking.
+            </p>
 
-export default function OnboardingChecklist() {
-    const [status, setStatus] = useState({
-        has_api_key: false,
-        has_android_sync: false,
-        has_ios_sync: false,
-        has_email_sync: false,
-        progress_percentage: 0,
-        is_complete: false
-    });
-    const [isVisible, setIsVisible] = useState(true);
-    const [activeModal, setActiveModal] = useState(null);
-
-    // Initial check for dismissed state
-    useEffect(() => {
-        const dismissed = localStorage.getItem('onboarding_dismissed') === 'true';
-        if (dismissed) {
-            setIsVisible(false);
-        }
-    }, []);
-
-    const fetchStatus = async () => {
-        const { ok, data } = await apiClient('/api/dashboard/onboarding/');
-        if (ok) {
-            setStatus(data);
-            if (data.is_complete && !localStorage.getItem('onboarding_dismissed')) {
-                // Auto dismiss when 100% complete
-                setTimeout(() => {
-                    handleDismiss();
-                }, 3000);
-            }
-        }
-    };
-
-    // Initial fetch and polling
-    useEffect(() => {
-        if (!isVisible) return;
-
-        fetchStatus();
-        const interval = setInterval(fetchStatus, 5000);
-        return () => clearInterval(interval);
-    }, [isVisible]);
-
-    const handleDismiss = () => {
-        setIsVisible(false);
-        localStorage.setItem('onboarding_dismissed', 'true');
-    };
-
-    if (!isVisible) return null;
-
-    const tasks = [
-        {
-            id: 'android',
-            label: 'Configure Android SMS Sync',
-            description: 'Send SMS receipts from your Android phone',
-            isComplete: status.has_android_sync,
-        },
-        {
-            id: 'ios',
-            label: 'Configure iOS SMS Sync',
-            description: 'Set up Apple Shortcuts to sync receipts',
-            isComplete: status.has_ios_sync,
-        },
-        {
-            id: 'api_key',
-            label: 'Add AI API Key',
-            description: 'Enable AI-powered transaction categorization',
-            isComplete: status.has_api_key,
-        },
-        {
-            id: 'email',
-            label: 'Configure Email Sync',
-            description: 'Set up IMAP auto-fetch for statements',
-            isComplete: status.has_email_sync,
-        }
-    ];
-
-    return (
-        <>
-            <div className="mb-8 shrink-0 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-                <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start">
-                    <div className="flex-1 mr-4">
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Getting Started</h2>
-                        <div className="flex items-center gap-4">
-                            <div className="h-2 flex-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                <div 
-                                    className="h-full bg-indigo-500 transition-all duration-500 ease-out"
-                                    style={{ width: `${status.progress_percentage}%` }}
-                                ></div>
-                            </div>
-                            <span className="text-sm font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                                {status.progress_percentage}% Complete
-                            </span>
-                        </div>
-                    </div>
-                    <button 
-                        onClick={handleDismiss}
-                        className="p-2 -m-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg transition"
-                        title="Dismiss"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
-                    </button>
-                </div>
-                <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {tasks.map(task => (
-                        <div 
-                            key={task.id}
-                            onClick={() => !task.isComplete && setActiveModal(task.id)}
-                            className={`p-4 flex items-center gap-4 transition ${task.isComplete ? 'bg-slate-50/50 dark:bg-slate-900/50 opacity-60' : 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
-                        >
-                            <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                                task.isComplete 
-                                    ? 'bg-emerald-500 border-emerald-500 text-white' 
-                                    : 'border-slate-300 dark:border-slate-600 text-transparent'
-                            }`}>
-                                <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                            </div>
-                            <div className="flex-1">
-                                <h3 className={`font-medium ${task.isComplete ? 'text-slate-600 dark:text-slate-400 line-through' : 'text-slate-900 dark:text-white'}`}>
-                                    {task.label}
-                                </h3>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">{task.description}</p>
-                            </div>
-                            {!task.isComplete && (
-                                <svg className="w-5 h-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                                </svg>
-                            )}
-                        </div>
-                    ))}
-                </div>
+            {/* Tab Switcher */}
+            <div className="flex bg-slate-100 dark:bg-zinc-800 p-1 rounded-lg mb-6">
+                <button
+                    onClick={() => setActiveTab('android')}
+                    className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                        activeTab === 'android'
+                            ? 'bg-white dark:bg-zinc-700 text-slate-900 dark:text-white shadow-sm'
+                            : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200'
+                    }`}
+                >
+                    🤖 Android
+                </button>
+                <button
+                    onClick={() => setActiveTab('ios')}
+                    className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                        activeTab === 'ios'
+                            ? 'bg-white dark:bg-zinc-700 text-slate-900 dark:text-white shadow-sm'
+                            : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200'
+                    }`}
+                >
+                    🍎 iOS
+                </button>
             </div>
 
-            <Modal isOpen={activeModal === 'android'} onClose={() => setActiveModal(null)} title="Android SMS Sync Setup">
+            {/* Android Tab */}
+            {activeTab === 'android' && (
                 <div className="text-sm text-slate-600 dark:text-slate-300 space-y-6">
                     {/* App Recommendations */}
                     <div>
@@ -257,7 +132,7 @@ export default function OnboardingChecklist() {
                         </div>
                     </div>
 
-                    {/* Step-by-Step Instructions */}
+                    {/* Steps */}
                     <div>
                         <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">Setup Steps</h4>
                         <ol className="space-y-4">
@@ -282,10 +157,10 @@ export default function OnboardingChecklist() {
                                     <div className="mt-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
                                         <div className="flex items-center justify-between mb-1.5">
                                             <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Webhook URL</span>
-                                            <CopyButton text={`${window.location.protocol}//${window.location.hostname}:8000/api/webhooks/sms/`} />
+                                            <CopyButton text={webhookUrl} />
                                         </div>
                                         <code className="block text-xs text-indigo-600 dark:text-indigo-400 break-all font-mono">
-                                            {`${window.location.protocol}//${window.location.hostname}:8000/api/webhooks/sms/`}
+                                            {webhookUrl}
                                         </code>
                                     </div>
                                 </div>
@@ -304,7 +179,7 @@ export default function OnboardingChecklist() {
                                         </code>
                                     </div>
                                     <ul className="mt-2 space-y-1 text-xs text-slate-500 dark:text-slate-400">
-                                        <li>• <code className="text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">message</code> → The full SMS text body (use the app's variable for incoming message)</li>
+                                        <li>• <code className="text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">message</code> → The full SMS text body</li>
                                         <li>• <code className="text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">source</code> → Always <code className="text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">"SMS_ANDROID"</code></li>
                                     </ul>
                                 </div>
@@ -313,25 +188,23 @@ export default function OnboardingChecklist() {
                                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center justify-center">5</span>
                                 <div>
                                     <p className="font-medium text-slate-800 dark:text-slate-200">Send a test SMS and verify it appears in your Transactions</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">The dashboard will auto-detect a successful sync and mark this step complete.</p>
                                 </div>
                             </li>
                         </ol>
                     </div>
 
-                    {/* Tip */}
                     <div className="flex gap-2.5 p-3 rounded-xl bg-blue-50 dark:bg-blue-500/5 border border-blue-100 dark:border-blue-500/10">
                         <span className="text-base">💡</span>
-                        <div className="text-xs text-blue-700 dark:text-blue-300">
-                            <strong>Tip:</strong> Make sure your phone and this computer are on the <strong>same Wi-Fi network</strong>. The webhook URL above uses your machine's local IP.
-                        </div>
+                        <p className="text-xs text-blue-700 dark:text-blue-300">
+                            <strong>Tip:</strong> Make sure your phone and this computer are on the <strong>same Wi-Fi network</strong>.
+                        </p>
                     </div>
                 </div>
-            </Modal>
+            )}
 
-            <Modal isOpen={activeModal === 'ios'} onClose={() => setActiveModal(null)} title="iOS SMS Sync Setup">
+            {/* iOS Tab */}
+            {activeTab === 'ios' && (
                 <div className="text-sm text-slate-600 dark:text-slate-300 space-y-6">
-                    {/* App Info */}
                     <div className="flex gap-3 p-3 rounded-xl border border-blue-200 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/5">
                         <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-500/10 flex items-center justify-center shrink-0">
                             <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clipRule="evenodd" /></svg>
@@ -342,7 +215,6 @@ export default function OnboardingChecklist() {
                         </div>
                     </div>
 
-                    {/* Step-by-Step */}
                     <div>
                         <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">Setup Steps</h4>
                         <ol className="space-y-4">
@@ -356,7 +228,7 @@ export default function OnboardingChecklist() {
                                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center justify-center">2</span>
                                 <div>
                                     <p className="font-medium text-slate-800 dark:text-slate-200">Choose <strong>"Message"</strong> as the trigger</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Set Sender to your bank's number or sender name. Select "Run Immediately" and disable "Notify When Run".</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Set Sender to your bank's number. Select "Run Immediately" and disable "Notify When Run".</p>
                                 </div>
                             </li>
                             <li className="flex gap-3">
@@ -366,10 +238,10 @@ export default function OnboardingChecklist() {
                                     <div className="mt-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
                                         <div className="flex items-center justify-between mb-1.5">
                                             <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Webhook URL</span>
-                                            <CopyButton text={`${window.location.protocol}//${window.location.hostname}:8000/api/webhooks/sms/`} />
+                                            <CopyButton text={webhookUrl} />
                                         </div>
                                         <code className="block text-xs text-indigo-600 dark:text-indigo-400 break-all font-mono">
-                                            {`${window.location.protocol}//${window.location.hostname}:8000/api/webhooks/sms/`}
+                                            {webhookUrl}
                                         </code>
                                     </div>
                                 </div>
@@ -397,7 +269,7 @@ export default function OnboardingChecklist() {
                                         </li>
                                     </ul>
                                     <ul className="mt-2 space-y-1 text-xs text-slate-500 dark:text-slate-400">
-                                        <li>• <code className="text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">message</code> → Tap and select <strong>Shortcut Input</strong> (the incoming SMS text)</li>
+                                        <li>• <code className="text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">message</code> → Tap and select <strong>Shortcut Input</strong></li>
                                         <li>• <code className="text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">source</code> → Type <code className="text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">"SMS_IOS"</code></li>
                                     </ul>
                                 </div>
@@ -406,7 +278,7 @@ export default function OnboardingChecklist() {
                                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center justify-center">5</span>
                                 <div>
                                     <p className="font-medium text-slate-800 dark:text-slate-200">Run the shortcut to test</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Trigger a real SMS from your bank or test with any message. Once it reaches the dashboard, this step auto-completes.</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Trigger a real SMS from your bank or test with any message.</p>
                                 </div>
                             </li>
                         </ol>
@@ -414,20 +286,12 @@ export default function OnboardingChecklist() {
 
                     <div className="flex gap-2.5 p-3 rounded-xl bg-blue-50 dark:bg-blue-500/5 border border-blue-100 dark:border-blue-500/10">
                         <span className="text-base">💡</span>
-                        <div className="text-xs text-blue-700 dark:text-blue-300">
+                        <p className="text-xs text-blue-700 dark:text-blue-300">
                             <strong>Tip:</strong> Apple Shortcuts automations only work when your iPhone is <strong>unlocked and on the same Wi-Fi</strong> as your LocalCent server.
-                        </div>
+                        </p>
                     </div>
                 </div>
-            </Modal>
-
-            <Modal isOpen={activeModal === 'api_key'} onClose={() => setActiveModal(null)} title="Add AI API Key">
-                <AiSettings />
-            </Modal>
-
-            <Modal isOpen={activeModal === 'email'} onClose={() => setActiveModal(null)} title="Configure Email Sync">
-                <EmailSyncSettings />
-            </Modal>
-        </>
+            )}
+        </div>
     );
 }

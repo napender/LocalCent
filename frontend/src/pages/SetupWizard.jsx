@@ -100,7 +100,9 @@ export default function SetupWizard() {
         
         {/* Header & Progress Indicator */}
         <div className="mb-8 text-center">
-          <img src="/logo.png" alt="LocalCent" className="w-16 h-16 bg-white rounded-xl shadow p-1 mb-4 mx-auto" />
+          <div className="w-14 h-14 rounded-xl overflow-hidden shadow-sm mb-4 mx-auto flex items-center justify-center bg-white dark:bg-slate-800">
+            <img src="/logo.png" alt="LocalCent" className="w-24 h-24 max-w-none object-contain" />
+          </div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Welcome to LocalCent</h1>
           <p className="text-sm text-slate-500">Let's set up your secure admin account.</p>
           

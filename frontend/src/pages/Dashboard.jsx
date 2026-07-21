@@ -7,10 +7,12 @@ import SummaryMetrics from '../features/dashboard/SummaryMetrics';
 import SettingsForm from '../features/settings/SettingsForm';
 import CardManagement from '../features/settings/CardManagement';
 import AIAnalysisModal from '../features/ai-analysis/AIAnalysisModal';
+import AIChatPanel from '../features/ai-analysis/AIChatPanel';
 import UpcomingBills from '../features/dashboard/UpcomingBills';
 import CreditCardsWidget from '../features/dashboard/CreditCardsWidget';
 import AiSettings from '../features/settings/AiSettings';
 import EmailSyncSettings from '../features/settings/EmailSyncSettings';
+import SmsSyncSettings from '../features/settings/SmsSyncSettings';
 import { apiClient } from '../services/api';
 
 export default function Dashboard() {
@@ -30,7 +32,7 @@ export default function Dashboard() {
             
             {/* Top Header (Mobile Only) */}
             <header className="md:hidden flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-900 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-md z-10">
-                <img src="/logo-wide.png" alt="LocalCent" className="w-28 h-auto object-contain object-left" />
+                <img src="/logo-wide.png" alt="LocalCent" className="w-28 h-auto max-w-none object-contain object-left -ml-1" />
                 <div className="flex items-center gap-3">
                     <span className="text-slate-500 dark:text-slate-400 text-sm truncate max-w-[100px]">{currentUser?.name}</span>
                     <button onClick={logout} className="p-2 rounded-full bg-slate-200 dark:bg-slate-900 hover:bg-slate-300 dark:hover:bg-slate-800 transition">
@@ -49,8 +51,8 @@ export default function Dashboard() {
 
             {/* Sidebar (Desktop Only) */}
             <aside className="hidden md:flex flex-col w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
-                <div className="mb-8 flex items-center justify-center">
-                    <img src="/logo-wide.png" alt="LocalCent" className="w-48 max-w-full h-auto object-contain drop-shadow-md transition-transform hover:scale-105" />
+                <div className="mb-5 -mx-1">
+                    <img src="/logo-wide.png" alt="LocalCent" className="w-full h-auto object-contain drop-shadow-sm" />
                 </div>
                 
                 <nav className="flex-1 space-y-2">
@@ -134,6 +136,11 @@ export default function Dashboard() {
                                     <UpcomingBills />
                                     <CreditCardsWidget />
                                 </div>
+
+                                {/* AI Chat Panel */}
+                                <div className="shrink-0">
+                                    <AIChatPanel />
+                                </div>
                             </div>
                         </div>
                         
@@ -152,6 +159,7 @@ export default function Dashboard() {
                         <SettingsForm />
                         <AiSettings />
                         <EmailSyncSettings />
+                        <SmsSyncSettings />
                         <CardManagement />
                     </div>
                 )}

@@ -24,7 +24,9 @@ export default function Login({ onForgotPassword }) {
         <div className="flex flex-col h-screen w-screen items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white font-sans">
             <div className="w-full max-w-md p-8 flex flex-col items-center">
                 <div className="text-center mb-8 flex flex-col items-center">
-                    <img src="/logo.png" alt="LocalCent Logo" className="w-16 h-16 mb-4 rounded-xl shadow-sm" />
+                    <div className="w-14 h-14 rounded-xl overflow-hidden shadow-sm mb-4 mx-auto flex items-center justify-center bg-white dark:bg-slate-800">
+                        <img src="/logo.png" alt="LocalCent" className="w-24 h-24 max-w-none object-contain" />
+                    </div>
                     <h1 className="text-4xl font-bold mb-2">
                         <span className="text-slate-800 dark:text-slate-200 font-normal">Local</span>
                         <span className="text-indigo-600 dark:text-indigo-400 relative">Cent<span className="absolute -top-1 -right-1 w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span></span>

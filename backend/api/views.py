@@ -471,7 +471,7 @@ def system_settings(request):
             
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
-from .ai_service import get_aggregated_data, generate_financial_advice
+from .ai_service import get_aggregated_data, generate_financial_advice, generate_chat_reply
 
 @csrf_exempt
 def ai_analyze(request):
@@ -498,6 +498,39 @@ def ai_analyze(request):
             logger.error(f"AI Analysis error: {e}", exc_info=True)
             return JsonResponse({"error": "Internal server error"}, status=500)
             
+    return JsonResponse({"error": "Method not allowed"}, status=405)
+
+@csrf_exempt
+def ai_chat(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            messages = data.get('messages', [])
+
+            if not messages:
+                return JsonResponse({"success": False, "error": "No messages provided."}, status=400)
+
+            settings = SystemSettings.objects.first()
+            if not settings:
+                return JsonResponse({"success": False, "error": "System settings not configured."}, status=400)
+
+            api_key = settings.get_decrypted_api_key()
+            if not api_key:
+                return JsonResponse({"success": False, "error": "AI API Key not configured in Settings."}, status=400)
+
+            result = generate_chat_reply(messages, settings.active_ai_provider, api_key, settings)
+
+            if result.get("success"):
+                return JsonResponse({"success": True, "reply": result["reply"]}, status=200)
+            else:
+                return JsonResponse({"success": False, "error": result.get("error")}, status=500)
+
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid payload"}, status=400)
+        except Exception as e:
+            logger.error(f"AI Chat error: {e}", exc_info=True)
+            return JsonResponse({"error": "Internal server error"}, status=500)
+
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
 from .models import RecurringBill
